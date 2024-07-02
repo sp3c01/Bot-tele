@@ -53,7 +53,7 @@ De R$67,90 Por apenas R$11,90👇🏻🥵💦`,
     text: `Vem ver eu brincando com minha bucetinha rosinha no meu grupo vip🙈🔥
 
 Clique no botão abaixo para ver o vídeo completo sem censura⬇️`,
-    schedule: '12:48',
+    schedule: '12:56',
     dayOfWeek: 2 
   },
   {
