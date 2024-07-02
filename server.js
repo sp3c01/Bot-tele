@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const moment = require('moment-timezone');
 
-const TOKEN = '7128149289:AAEP6PDESreq2ZuUYETKeyBGqnYhoGOL02U';
+const TOKEN = '7128149289:AAEP6PDESreq2ZuUYETKeyBGqnYhoGOL02U'; // Substitua pelo seu token do Telegram
 const TIMEZONE = 'America/Sao_Paulo';
 
 const bot = new TelegramBot(TOKEN, { polling: true });
@@ -40,23 +40,54 @@ bot.on('webhook_error', (error) => {
 
 // Lógica de envio de mídia agendada
 const mediaData = [
-    // Definir as mídias agendadas aqui
+    // Defina suas informações de mídia aqui conforme necessário
 ];
 
 const enviarMidia = (chatId, mediaPath, mensagem) => {
-    // Lógica para enviar mídia
+    console.log(`Enviando mídia: ${mediaPath}`);
+  
+    if (!fs.existsSync(mediaPath)) {
+        console.error('O arquivo de mídia não existe:', mediaPath);
+        return;
+    }
+  
+    if (path.extname(mediaPath) === '.jpg' || path.extname(mediaPath) === '.jpeg' || path.extname(mediaPath) === '.png') {
+        bot.sendPhoto(chatId, fs.readFileSync(mediaPath), { caption: mensagem })
+            .then(() => {
+                console.log(`Foto enviada para ${chatId}`);
+            })
+            .catch(err => {
+                console.error('Erro ao enviar a foto:', err);
+            });
+    } else {
+        bot.sendVideo(chatId, fs.createReadStream(mediaPath), { caption: mensagem })
+            .then(() => {
+                console.log(`Vídeo enviado para ${chatId}`);
+            })
+            .catch(err => {
+                console.error('Erro ao enviar o vídeo:', err);
+            });
+    }
 };
 
 const verificarHorario = () => {
-    // Lógica para verificar horários e enviar mídia
+    const now = moment().tz(TIMEZONE);
+    const diaSemana = now.day(); // 0 (Domingo) a 6 (Sábado)
+    const horaAtual = now.format('HH:mm');
+    console.log(`Hora atual no fuso horário ${TIMEZONE}: ${horaAtual}`);
+  
+    const mediaAgendadas = mediaData.filter(media => media.schedule === horaAtual && media.dayOfWeek === diaSemana);
+  
+    return mediaAgendadas.length > 0 ? mediaAgendadas[0] : null;
 };
 
 // Intervalo para verificar horários a cada minuto
-setInterval(verificarHorario, 60000);
-
-// Função principal para iniciar o bot
-const main = () => {
-    console.log('Iniciando verificação de horários...');
-};
-
-main();
+setInterval(() => {
+    const mediaParaEnviar = verificarHorario();
+    if (mediaParaEnviar) {
+        console.log(`É ${mediaParaEnviar.schedule}, enviando mídia...`);
+        enviarMidia('-1002239256038', mediaParaEnviar.path, mediaParaEnviar.text);
+    } else {
+        console.log('Ainda não é o horário de enviar mídia. Aguardando...');
+    }
+}, 60000);
